@@ -5,6 +5,7 @@ import {
   dailyPlanPrompt,
   priorityPrompt,
   lifePlanPrompt,
+  auraPrompt,
 } from '../services/ai/prompts.js';
 
 const rankedForPrompt = (ranked) =>
@@ -60,4 +61,63 @@ export const lifePlan = asyncHandler(async (req, res) => {
   });
   const plan = await generateJSON(prompt);
   res.json({ plan });
+});
+
+// POST /api/ai/aura
+export const aura = asyncHandler(async (req, res) => {
+  const message = String(req.body?.message || '').trim();
+
+  if (!message) {
+    throw new ApiError(400, 'Message is required');
+  }
+
+  if (message.length > 2000) {
+    throw new ApiError(400, 'Message is too long. Keep it under 2000 characters.');
+  }
+
+  const ctx = await buildAcademicContext(req.user._id);
+
+  const context = {
+    activeSemester: ctx.activeSemester
+      ? {
+          semesterNumber: ctx.activeSemester.semesterNumber,
+          name: ctx.activeSemester.name,
+          active: ctx.activeSemester.active,
+        }
+      : null,
+
+    subjects: rankedForPrompt(ctx.ranked),
+
+    freeSlots: ctx.freeSlots,
+
+    recentStudy: ctx.recentStudy,
+
+    // Attendance is intentionally exposed through the already
+    // computed values rather than asking the LLM to calculate them.
+    attendance: Object.entries(ctx.attendanceMap).map(([subjectId, record]) => ({
+      subjectId,
+      present: record.present,
+      absent: record.absent,
+      total: record.present + record.absent,
+      attendancePercent: ctx.attendancePercentOf(subjectId),
+    })),
+
+    exams: Object.entries(ctx.examMap).map(([subjectId, exam]) => ({
+      subjectId,
+      examDate: exam.examDate,
+      preparationStatus: exam.preparationStatus,
+    })),
+  };
+
+  const prompt = auraPrompt({
+    user: req.user.toSafeJSON(),
+    context,
+    message,
+  });
+
+  const response = await generateJSON(prompt);
+
+  res.json({
+    response,
+  });
 });
