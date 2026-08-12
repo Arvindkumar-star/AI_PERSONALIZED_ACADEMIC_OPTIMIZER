@@ -1,4 +1,5 @@
 import asyncHandler from 'express-async-handler';
+import ApiError from '../utils/ApiError.js';
 import { buildAcademicContext } from '../services/analytics/context.js';
 import { generateJSON, aiEnabled } from '../services/ai/provider.js';
 import {
