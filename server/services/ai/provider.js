@@ -25,20 +25,47 @@ function extractJSON(text) {
 
 async function callGemini(prompt) {
   const { geminiApiKey, geminiModel } = env.ai;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`;
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': geminiApiKey,
+    },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.6, responseMimeType: 'application/json' },
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.6,
+        responseMimeType: 'application/json',
+      },
     }),
   });
+
   if (!res.ok) {
     const body = await res.text();
-    throw new ApiError(502, `Gemini request failed: ${res.status}`, body.slice(0, 500));
+
+    console.error('Gemini API error:', {
+      status: res.status,
+      model: geminiModel,
+      body,
+    });
+
+    throw new ApiError(
+      502,
+      `Gemini request failed: ${res.status}`,
+      body.slice(0, 500)
+    );
   }
+
   const data = await res.json();
+
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
