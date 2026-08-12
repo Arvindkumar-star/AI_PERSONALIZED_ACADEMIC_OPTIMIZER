@@ -15,5 +15,6 @@ router.get('/status', aiStatus);
 router.post('/daily-plan', dailyPlan);
 router.post('/priority', priority);
 router.post('/life-plan', lifePlan);
+router.post('/aura', aura);
 
 export default router;
