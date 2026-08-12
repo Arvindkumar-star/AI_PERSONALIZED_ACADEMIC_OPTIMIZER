@@ -23,25 +23,6 @@ function extractJSON(text) {
   }
 }
 
-async function listGeminiModels() {
-  const { geminiApiKey } = env.ai;
-
-  const res = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models',
-    {
-      headers: {
-        'x-goog-api-key': geminiApiKey,
-      },
-    }
-  );
-
-  const data = await res.json();
-
-  console.log('AVAILABLE GEMINI MODELS:', JSON.stringify(data, null, 2));
-
-  return data;
-}
-
 async function callGemini(prompt) {
   const { geminiApiKey, geminiModel } = env.ai;
 
