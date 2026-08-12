@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AuraAssistant from '@/components/AuraAssistant';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -110,6 +111,7 @@ export function AppLayout() {
         <main className="mx-auto max-w-6xl p-4 lg:p-8">
           <Outlet />
         </main>
+        <AuraAssistant />
       </div>
     </div>
   );
