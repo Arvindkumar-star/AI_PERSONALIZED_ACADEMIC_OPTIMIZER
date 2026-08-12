@@ -63,4 +63,7 @@ export const aiApi = {
   dailyPlan: (day) => api.post('/ai/daily-plan', day ? { day } : {}).then((r) => r.data),
   priority: () => api.post('/ai/priority').then((r) => r.data),
   lifePlan: () => api.post('/ai/life-plan').then((r) => r.data),
+
+  aura: (message) =>
+  api.post('/ai/aura', { message }).then((r) => r.data.response),
 };
