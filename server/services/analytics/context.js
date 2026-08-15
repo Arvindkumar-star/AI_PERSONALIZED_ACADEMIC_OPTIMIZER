@@ -26,14 +26,21 @@ const DAY_NAMES = [
 function daysUntil(date) {
   if (!date) return null;
 
-  const diff = new Date(date).getTime() - Date.now();
+  const diff =
+    new Date(date).getTime() - Date.now();
 
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.ceil(
+    diff / (1000 * 60 * 60 * 24)
+  );
 }
 
-function buildAttendanceState(subjects, attendanceMap) {
+function buildAttendanceState(
+  subjects,
+  attendanceMap
+) {
   return subjects.map((subject) => {
-    const attendance = attendanceMap[String(subject._id)];
+    const attendance =
+      attendanceMap[String(subject._id)];
 
     if (!attendance) {
       return {
@@ -54,12 +61,16 @@ function buildAttendanceState(subjects, attendanceMap) {
       attendance.absent
     );
 
-    const required = attendance.requiredPercent ?? 75;
+    const required =
+      attendance.requiredPercent ?? 75;
 
     let risk = 'safe';
 
     if (percent < required) {
-      risk = percent < required - 10 ? 'critical' : 'at-risk';
+      risk =
+        percent < required - 10
+          ? 'critical'
+          : 'at-risk';
     }
 
     return {
@@ -70,11 +81,13 @@ function buildAttendanceState(subjects, attendanceMap) {
       attendancePercent: percent,
       requiredPercent: required,
       attendanceRisk: risk,
+
       classesCanSkip: bunkableClasses(
         attendance.present,
         attendance.absent,
         required
       ),
+
       classesNeeded: classesNeeded(
         attendance.present,
         attendance.absent,
@@ -84,10 +97,14 @@ function buildAttendanceState(subjects, attendanceMap) {
   });
 }
 
-function buildExamState(subjects, examMap) {
+function buildExamState(
+  subjects,
+  examMap
+) {
   return subjects
     .map((subject) => {
-      const exam = examMap[String(subject._id)];
+      const exam =
+        examMap[String(subject._id)];
 
       if (!exam) return null;
 
@@ -95,87 +112,134 @@ function buildExamState(subjects, examMap) {
         subject: subject.name,
         subjectId: subject._id,
         examDate: exam.examDate,
-        daysUntilExam: daysUntil(exam.examDate),
-        preparationStatus: exam.preparationStatus,
-        internalMarks: exam.internalMarks,
+
+        daysUntilExam:
+          daysUntil(exam.examDate),
+
+        preparationStatus:
+          exam.preparationStatus,
+
+        internalMarks:
+          exam.internalMarks,
       };
     })
     .filter(Boolean)
     .sort((a, b) => {
-      if (a.daysUntilExam === null) return 1;
-      if (b.daysUntilExam === null) return -1;
-      return a.daysUntilExam - b.daysUntilExam;
+      if (a.daysUntilExam === null)
+        return 1;
+
+      if (b.daysUntilExam === null)
+        return -1;
+
+      return (
+        a.daysUntilExam -
+        b.daysUntilExam
+      );
     });
 }
 
-function buildStudyState(recentStudy, dailyStudyGoal) {
-  const totalRecentMinutes = recentStudy.reduce(
-    (total, item) => total + item.minutes,
-    0
-  );
+function buildStudyState(
+  recentStudy,
+  dailyStudyGoal
+) {
+  const totalRecentMinutes =
+    recentStudy.reduce(
+      (total, item) =>
+        total + item.minutes,
+      0
+    );
 
-  const dailyGoalMinutes = Math.round(
-    (dailyStudyGoal || 0) * 60
-  );
+  const dailyGoalMinutes =
+    Math.round(
+      (dailyStudyGoal || 0) * 60
+    );
 
-  const averageDailyMinutes = Math.round(
-    totalRecentMinutes / 7
-  );
+  const averageDailyMinutes =
+    Math.round(
+      totalRecentMinutes / 7
+    );
 
   return {
-    last7DaysMinutes: totalRecentMinutes,
+    last7DaysMinutes:
+      totalRecentMinutes,
+
     averageDailyMinutes,
+
     dailyGoalMinutes,
-    dailyGoalHours: dailyStudyGoal || 0,
+
+    dailyGoalHours:
+      dailyStudyGoal || 0,
+
     averageDailyGoalCompletion:
       dailyGoalMinutes > 0
         ? Number(
             (
-              (averageDailyMinutes / dailyGoalMinutes) *
+              (averageDailyMinutes /
+                dailyGoalMinutes) *
               100
             ).toFixed(1)
           )
         : 0,
-    subjectBreakdown: recentStudy,
+
+    subjectBreakdown:
+      recentStudy,
   };
 }
 
-function buildFreeTimeState(freeSlots, targetDay) {
-  const todaySlots = freeSlots[targetDay] || [];
+function buildFreeTimeState(
+  freeSlots,
+  targetDay
+) {
+  const todaySlots =
+    freeSlots[targetDay] || [];
 
-  const totalTodayMinutes = todaySlots.reduce(
-    (total, slot) => total + slot.minutes,
-    0
-  );
+  const totalTodayMinutes =
+    todaySlots.reduce(
+      (total, slot) =>
+        total + slot.minutes,
+      0
+    );
 
   return {
     targetDay,
-    totalAvailableMinutes: totalTodayMinutes,
-    totalAvailableHours: Number(
-      (totalTodayMinutes / 60).toFixed(2)
-    ),
+
+    totalAvailableMinutes:
+      totalTodayMinutes,
+
+    totalAvailableHours:
+      Number(
+        (
+          totalTodayMinutes / 60
+        ).toFixed(2)
+      ),
+
     slots: todaySlots,
   };
 }
 
 // Gathers the complete academic state required by analytics and AURA.
-eexport async function buildAcademicContext(
+export async function buildAcademicContext(
   userId,
   { day, dailyStudyGoal } = {}
-) {xport async function buildAcademicContext(userId, { day } = {}) {
+) {
   const activeSemester =
     (await Semester.findOne({
       userId,
       active: true,
     })) ||
-    (await Semester.findOne({ userId }).sort({
+    (await Semester.findOne({
+      userId,
+    }).sort({
       semesterNumber: -1,
     }));
 
-  const subjectFilter = { userId };
+  const subjectFilter = {
+    userId,
+  };
 
   if (activeSemester) {
-    subjectFilter.semesterId = activeSemester._id;
+    subjectFilter.semesterId =
+      activeSemester._id;
   }
 
   const [
@@ -185,9 +249,18 @@ eexport async function buildAcademicContext(
     timetable,
   ] = await Promise.all([
     Subject.find(subjectFilter),
-    Attendance.find({ userId }),
-    Exam.find({ userId }),
-    Timetable.find({ userId }),
+
+    Attendance.find({
+      userId,
+    }),
+
+    Exam.find({
+      userId,
+    }),
+
+    Timetable.find({
+      userId,
+    }),
   ]);
 
   // -----------------------------------------
@@ -197,7 +270,9 @@ eexport async function buildAcademicContext(
   const attendanceMap = {};
 
   for (const item of attendance) {
-    attendanceMap[String(item.subjectId)] = item;
+    attendanceMap[
+      String(item.subjectId)
+    ] = item;
   }
 
   // -----------------------------------------
@@ -207,13 +282,15 @@ eexport async function buildAcademicContext(
   const examMap = {};
 
   for (const exam of exams) {
-    const key = String(exam.subjectId);
+    const key =
+      String(exam.subjectId);
 
-    // Keep the nearest exam for each subject.
     if (
       !examMap[key] ||
       new Date(exam.examDate) <
-        new Date(examMap[key].examDate)
+        new Date(
+          examMap[key].examDate
+        )
     ) {
       examMap[key] = exam;
     }
@@ -223,59 +300,87 @@ eexport async function buildAcademicContext(
   // Backend-computed subject priorities
   // -----------------------------------------
 
-  const ranked = rankSubjects(subjects, {
-    attendanceMap,
-    examMap,
-  });
+  const ranked =
+    rankSubjects(subjects, {
+      attendanceMap,
+      examMap,
+    });
 
   // -----------------------------------------
   // Timetable / free slots
   // -----------------------------------------
 
-  const freeSlots = computeFreeSlots(timetable);
+  const freeSlots =
+    computeFreeSlots(timetable);
 
   const targetDay =
-    day || DAY_NAMES[new Date().getDay()];
+    day ||
+    DAY_NAMES[
+      new Date().getDay()
+    ];
 
   // -----------------------------------------
   // Recent study history
   // -----------------------------------------
 
-  const since = new Date(
-    Date.now() -
-      7 * 24 * 60 * 60 * 1000
-  );
+  const since =
+    new Date(
+      Date.now() -
+        7 *
+          24 *
+          60 *
+          60 *
+          1000
+    );
 
-  const recent = await StudySession.aggregate([
-    {
-      $match: {
-        userId,
-        endTime: { $ne: null },
-        startTime: { $gte: since },
+  const recent =
+    await StudySession.aggregate([
+      {
+        $match: {
+          userId,
+
+          endTime: {
+            $ne: null,
+          },
+
+          startTime: {
+            $gte: since,
+          },
+        },
       },
-    },
-    {
-      $group: {
-        _id: '$subjectId',
-        minutes: { $sum: '$duration' },
+
+      {
+        $group: {
+          _id: '$subjectId',
+
+          minutes: {
+            $sum: '$duration',
+          },
+        },
       },
-    },
-  ]);
+    ]);
 
   const subjectName = {};
 
   for (const subject of subjects) {
-    subjectName[String(subject._id)] =
-      subject.name;
+    subjectName[
+      String(subject._id)
+    ] = subject.name;
   }
 
-  const recentStudy = recent.map((item) => ({
-    subject:
-      subjectName[String(item._id)] ||
-      'Unknown',
-    subjectId: item._id,
-    minutes: item.minutes,
-  }));
+  const recentStudy =
+    recent.map((item) => ({
+      subject:
+        subjectName[
+          String(item._id)
+        ] || 'Unknown',
+
+      subjectId:
+        item._id,
+
+      minutes:
+        item.minutes,
+    }));
 
   // -----------------------------------------
   // Build decision-oriented state
@@ -294,10 +399,10 @@ eexport async function buildAcademicContext(
     );
 
   const studyState =
-  buildStudyState(
-    recentStudy,
-    dailyStudyGoal
-  );
+    buildStudyState(
+      recentStudy,
+      dailyStudyGoal
+    );
 
   const freeTimeState =
     buildFreeTimeState(
@@ -310,6 +415,7 @@ eexport async function buildAcademicContext(
   // -----------------------------------------
 
   return {
+    // Existing Version 1 context
     activeSemester,
 
     subjects,
@@ -326,17 +432,13 @@ eexport async function buildAcademicContext(
 
     recentStudy,
 
-    attendanceState,
-
-    examState,
-
-    studyState,
-
-    freeTimeState,
-
-    attendancePercentOf: (subjectId) => {
+    attendancePercentOf: (
+      subjectId
+    ) => {
       const item =
-        attendanceMap[String(subjectId)];
+        attendanceMap[
+          String(subjectId)
+        ];
 
       return item
         ? attendancePercent(
@@ -344,6 +446,24 @@ eexport async function buildAcademicContext(
             item.absent
           )
         : null;
+    },
+
+    // New Version 2 context
+    academicState: {
+      attendance:
+        attendanceState,
+
+      exams:
+        examState,
+
+      study:
+        studyState,
+
+      freeTime:
+        freeTimeState,
+
+      subjectPriorities:
+        ranked,
     },
   };
 }
