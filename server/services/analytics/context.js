@@ -159,7 +159,10 @@ function buildFreeTimeState(freeSlots, targetDay) {
 }
 
 // Gathers the complete academic state required by analytics and AURA.
-export async function buildAcademicContext(userId, { day } = {}) {
+eexport async function buildAcademicContext(
+  userId,
+  { day, dailyStudyGoal } = {}
+) {xport async function buildAcademicContext(userId, { day } = {}) {
   const activeSemester =
     (await Semester.findOne({
       userId,
@@ -291,10 +294,10 @@ export async function buildAcademicContext(userId, { day } = {}) {
     );
 
   const studyState =
-    buildStudyState(
-      recentStudy,
-      null
-    );
+  buildStudyState(
+    recentStudy,
+    dailyStudyGoal
+  );
 
   const freeTimeState =
     buildFreeTimeState(
