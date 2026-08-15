@@ -88,11 +88,19 @@ function buildAttendanceState(
         required
       ),
 
-      classesNeeded: classesNeeded(
-        attendance.present,
-        attendance.absent,
-        required
-      ),
+      classesNeeded: Number.isFinite(
+  classesNeeded(
+    attendance.present,
+    attendance.absent,
+    required
+  )
+)
+  ? classesNeeded(
+      attendance.present,
+      attendance.absent,
+      required
+    )
+  : null,
     };
   });
 }
