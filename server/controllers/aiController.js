@@ -65,58 +65,141 @@ export const lifePlan = asyncHandler(async (req, res) => {
 });
 
 // POST /api/ai/aura
+// POST /api/ai/aura
 export const aura = asyncHandler(async (req, res) => {
-  const message = String(req.body?.message || '').trim();
+  const message = String(
+    req.body?.message || ''
+  ).trim();
 
   if (!message) {
-    throw new ApiError(400, 'Message is required');
+    throw new ApiError(
+      400,
+      'Message is required'
+    );
   }
 
   if (message.length > 2000) {
-    throw new ApiError(400, 'Message is too long. Keep it under 2000 characters.');
+    throw new ApiError(
+      400,
+      'Message is too long. Keep it under 2000 characters.'
+    );
   }
 
-  const ctx = await buildAcademicContext(req.user._id);
+  // -----------------------------------------
+  // Build complete academic context
+  // -----------------------------------------
+
+  const ctx =
+    await buildAcademicContext(
+      req.user._id,
+      {
+        dailyStudyGoal:
+          req.user.dailyStudyGoal,
+      }
+    );
+
+  // -----------------------------------------
+  // Existing Version 1 context
+  // -----------------------------------------
 
   const context = {
-    activeSemester: ctx.activeSemester
-      ? {
-          semesterNumber: ctx.activeSemester.semesterNumber,
-          name: ctx.activeSemester.name,
-          active: ctx.activeSemester.active,
-        }
-      : null,
+    activeSemester:
+      ctx.activeSemester
+        ? {
+            semesterNumber:
+              ctx.activeSemester
+                .semesterNumber,
 
-    subjects: rankedForPrompt(ctx.ranked),
+            name:
+              ctx.activeSemester.name,
 
-    freeSlots: ctx.freeSlots,
+            active:
+              ctx.activeSemester.active,
+          }
+        : null,
 
-    recentStudy: ctx.recentStudy,
+    subjects:
+      rankedForPrompt(
+        ctx.ranked
+      ),
 
-    // Attendance is intentionally exposed through the already
-    // computed values rather than asking the LLM to calculate them.
-    attendance: Object.entries(ctx.attendanceMap).map(([subjectId, record]) => ({
-      subjectId,
-      present: record.present,
-      absent: record.absent,
-      total: record.present + record.absent,
-      attendancePercent: ctx.attendancePercentOf(subjectId),
-    })),
+    freeSlots:
+      ctx.freeSlots,
 
-    exams: Object.entries(ctx.examMap).map(([subjectId, exam]) => ({
-      subjectId,
-      examDate: exam.examDate,
-      preparationStatus: exam.preparationStatus,
-    })),
+    recentStudy:
+      ctx.recentStudy,
+
+    attendance:
+      Object.entries(
+        ctx.attendanceMap
+      ).map(
+        ([
+          subjectId,
+          record,
+        ]) => ({
+          subjectId,
+
+          present:
+            record.present,
+
+          absent:
+            record.absent,
+
+          total:
+            record.present +
+            record.absent,
+
+          attendancePercent:
+            ctx.attendancePercentOf(
+              subjectId
+            ),
+        })
+      ),
+
+    exams:
+      Object.entries(
+        ctx.examMap
+      ).map(
+        ([
+          subjectId,
+          exam,
+        ]) => ({
+          subjectId,
+
+          examDate:
+            exam.examDate,
+
+          preparationStatus:
+            exam.preparationStatus,
+        })
+      ),
+
+    // ---------------------------------------
+    // NEW VERSION 2 ACADEMIC STATE
+    // ---------------------------------------
+
+    academicState:
+      ctx.academicState,
   };
 
-  const prompt = auraPrompt({
-    user: req.user.toSafeJSON(),
-    context,
-    message,
-  });
+  // -----------------------------------------
+  // Send complete state to AURA
+  // -----------------------------------------
 
-  const response = await generateJSON(prompt);
+  const prompt =
+    auraPrompt({
+      user:
+        req.user.toSafeJSON(),
+
+      context,
+
+      message,
+    });
+
+  const response =
+    await generateJSON(
+      prompt
+    );
 
   res.json({
     response,
