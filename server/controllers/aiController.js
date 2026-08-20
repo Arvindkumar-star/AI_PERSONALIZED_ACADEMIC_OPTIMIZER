@@ -1,5 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/ApiError.js';
+import {
+  buildDecisionState,
+} from '../services/analytics/decision.js';
 import { buildAcademicContext } from '../services/analytics/context.js';
 import { generateJSON, aiEnabled } from '../services/ai/provider.js';
 import {
@@ -98,6 +101,10 @@ export const aura = asyncHandler(async (req, res) => {
       }
     );
 
+  const decisionState =
+  buildDecisionState(
+    ctx.academicState
+  );
   // -----------------------------------------
   // Existing Version 1 context
   // -----------------------------------------
@@ -180,6 +187,8 @@ export const aura = asyncHandler(async (req, res) => {
 
     academicState:
       ctx.academicState,
+    
+    decisionState,
   };
 
   // -----------------------------------------
